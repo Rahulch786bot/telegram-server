@@ -36,7 +36,7 @@ app.get("/send-alert", async (req, res) => {
   let message = "🚨 Accident Detected!\nCheck immediately!";
 
   for (let id of users) {
-    await fetch(`https://api.telegram.org/botYOUR_TOKEN/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`);
+    await fetch(`https://api.telegram.org/bot8616202899:AAGQTd1xWfTMxHQLDfBLLruVtJtyDdn2t2c/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`);
   }
 
   res.send("Alert Sent");
