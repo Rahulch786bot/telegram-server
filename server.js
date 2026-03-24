@@ -31,15 +31,19 @@ app.post("/webhook", (req, res) => {
 });
 
 // ✅ SEND ALERT TO ALL USERS
-app.get("/send-alert", async (req, res) => {
+app.get("/alert", async (req, res) => {
 
-  let message = "🚨 Accident Detected!\nCheck immediately!";
+  let lat = req.query.lat;
+  let lon = req.query.lon;
+
+  let message = `🚨 ALERT
+Location: https://maps.google.com/?q=${lat},${lon}`;
 
   for (let id of users) {
-    await fetch(`https://api.telegram.org/bot8616202899:AAGQTd1xWfTMxHQLDfBLLruVtJtyDdn2t2c/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`);
+    await fetch(`https://api.telegram.org/botYOUR_TOKEN/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`);
   }
 
-  res.send("Alert Sent");
+  res.send("Alert sent");
 });
 
 app.listen(3000, () => console.log("Server running on port 3000"));
