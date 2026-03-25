@@ -1,19 +1,29 @@
 const express = require("express");
 const app = express();
-const fetch = require("node-fetch");
+
+// 🔥 Node 18+ → fetch already built-in (no need node-fetch)
+// If error na uncomment next line:
+// const fetch = require("node-fetch");
 
 app.use(express.json());
 
+// ✅ Use ENV for token (IMPORTANT)
+const TOKEN = process.env.BOT_TOKEN;
+
 let users = [];
 
-// ✅ ROOT (just to confirm server alive)
+// ✅ ROOT
 app.get("/", (req, res) => {
   res.send("🚀 Server Running");
 });
 
+// ✅ TEST ROUTE (debug)
+app.get("/test", (req, res) => {
+  res.send("TEST OK");
+});
+
 // ✅ TELEGRAM WEBHOOK
 app.post("/webhook", (req, res) => {
-
   console.log("🔥 DATA RECEIVED:", JSON.stringify(req.body));
 
   let msg = req.body.message;
@@ -30,20 +40,43 @@ app.post("/webhook", (req, res) => {
   res.sendStatus(200);
 });
 
-// ✅ SEND ALERT TO ALL USERS
-app.get("/alert", async (req, res) => {
-
-  let lat = req.query.lat;
-  let lon = req.query.lon;
-
-  let message = `🚨 ALERT
-Location: https://maps.google.com/?q=${lat},${lon}`;
-
-  for (let id of users) {
-    await fetch(`https://api.telegram.org/botYOUR_TOKEN/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`);
-  }
-
-  res.send("Alert sent");
+// ✅ CHECK USERS (debug)
+app.get("/users", (req, res) => {
+  res.json(users);
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+// ✅ SEND ALERT
+app.get("/alert", async (req, res) => {
+  try {
+    let lat = req.query.lat || "0";
+    let lon = req.query.lon || "0";
+
+    let message = `🚨 ALERT\nLocation: https://maps.google.com/?q=${lat},${lon}`;
+
+    console.log("📢 Users:", users);
+
+    if (users.length === 0) {
+      return res.send("❌ No users found. Send /start to bot first.");
+    }
+
+    for (let id of users) {
+      console.log("➡ Sending to:", id);
+
+      let url = `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`;
+
+      let response = await fetch(url);
+      let data = await response.json();
+
+      console.log("📩 Telegram response:", data);
+    }
+
+    res.send("✅ Alert sent");
+  } catch (error) {
+    console.log("❌ ERROR:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// ✅ PORT FIX (RENDER IMPORTANT)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
