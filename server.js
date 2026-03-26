@@ -54,16 +54,27 @@ app.get("/alert", async (req, res) => {
 
     for (let id of users) {
       let url = `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`;
-      await fetch(url);
+
+      console.log("➡ Sending to:", id);
+
+      let response = await fetch(url);
+      let data = await response.json();
+
+      // 🔥 IMPORTANT DEBUG
+      console.log("📩 Telegram response:", data);
+
+      if (!data.ok) {
+        console.log("❌ ERROR:", data.description);
+      }
     }
 
     res.send("✅ Alert sent");
   } catch (err) {
-    console.log(err);
+    console.log("❌ SERVER ERROR:", err);
     res.status(500).send("Error");
   }
 });
 
 // PORT
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
