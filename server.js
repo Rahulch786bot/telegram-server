@@ -7,6 +7,14 @@ const TOKEN = process.env.BOT_TOKEN;
 
 let users = [];
 
+// SENSOR DATA STORAGE
+let sensorData = {
+  alcohol: 0,
+  x: 0,
+  y: 0,
+  z: 0
+};
+
 // ROOT
 app.get("/", (req, res) => {
   res.send("🚀 Server Running");
@@ -19,15 +27,19 @@ app.get("/test", (req, res) => {
 
 // WEBHOOK
 app.post("/webhook", (req, res) => {
+
   console.log("🔥 DATA RECEIVED:", JSON.stringify(req.body));
 
   let msg = req.body.message;
 
   if (msg) {
+
     let chat_id = msg.chat.id;
 
     if (!users.includes(chat_id)) {
+
       users.push(chat_id);
+
       console.log("✅ New user:", chat_id);
     }
   }
@@ -40,27 +52,53 @@ app.get("/users", (req, res) => {
   res.json(users);
 });
 
+// RECEIVE SENSOR DATA FROM ESP32
+app.post("/sensor", (req, res) => {
+
+  sensorData = req.body;
+
+  console.log("📡 Sensor Data Received:");
+  console.log(sensorData);
+
+  res.json({
+    success: true,
+    message: "Sensor data received"
+  });
+});
+
+// SEND SENSOR DATA TO WEBSITE
+app.get("/sensor", (req, res) => {
+  res.json(sensorData);
+});
+
 // ALERT
 app.get("/alert", async (req, res) => {
+
   try {
+
     let lat = req.query.lat || "0";
     let lon = req.query.lon || "0";
 
-    let message = `🚨 ALERT\nLocation: https://maps.google.com/?q=${lat},${lon}`;
+    let message =
+      `🚨 ALERT\nLocation: https://maps.google.com/?q=${lat},${lon}`;
 
     if (users.length === 0) {
-      return res.send("❌ No users found. Send /start to bot first.");
+      return res.send(
+        "❌ No users found. Send /start to bot first."
+      );
     }
 
     for (let id of users) {
-      let url = `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`;
+
+      let url =
+        `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(message)}`;
 
       console.log("➡ Sending to:", id);
 
       let response = await fetch(url);
+
       let data = await response.json();
 
-      // 🔥 IMPORTANT DEBUG
       console.log("📩 Telegram response:", data);
 
       if (!data.ok) {
@@ -69,12 +107,18 @@ app.get("/alert", async (req, res) => {
     }
 
     res.send("✅ Alert sent");
+
   } catch (err) {
+
     console.log("❌ SERVER ERROR:", err);
+
     res.status(500).send("Error");
   }
 });
 
 // PORT
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on ${PORT}`);
+});
